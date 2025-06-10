@@ -1,9 +1,10 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { message } from 'antd';
 import { CopyOutlined } from '@ant-design/icons';
 import { Light as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vs } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 import json from 'react-syntax-highlighter/dist/esm/languages/hljs/json';
+import JSON5 from 'json5';
 import './JsonViewer.css';
 
 // 注册JSON语言
@@ -13,30 +14,45 @@ interface JsonViewerProps {
   json: string;
 }
 
+interface JsonError {
+  message: string;
+  line: number;
+  column: number;
+}
+
 const JsonViewer: React.FC<JsonViewerProps> = ({ json }) => {
   const lineRef = useRef<HTMLPreElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const [isCompressed, setIsCompressed] = useState(false);
+  const [error, setError] = useState<JsonError | null>(null);
+  const [formattedJson, setFormattedJson] = useState('');
 
-  // 格式化JSON
-  const formatJson = (jsonString: string): string => {
-    try {
-      if (!jsonString.trim()) {
-        return '';
-      }
-      const parsed = JSON.parse(jsonString);
-      return isCompressed
-        ? JSON.stringify(parsed)
-        : JSON.stringify(parsed, null, 2);
-    } catch (error) {
-      return 'Invalid JSON';
+  useEffect(() => {
+    if (!json.trim()) {
+      setError(null);
+      setFormattedJson('');
+      return;
     }
-  };
+    try {
+      const parsed = JSON5.parse(json);
+      setError(null);
+      setFormattedJson(
+        isCompressed ? JSON.stringify(parsed) : JSON.stringify(parsed, null, 2)
+      );
+    } catch (err: any) {
+      const errorInfo: JsonError = {
+        message: err.message,
+        line: err.lineNumber || 0,
+        column: err.columnNumber || 0
+      };
+      setError(errorInfo);
+      setFormattedJson(`Invalid JSON: ${errorInfo.message} (行 ${errorInfo.line}, 列 ${errorInfo.column})`);
+    }
+  }, [json, isCompressed]);
 
   // 处理复制功能
   const handleCopy = () => {
-    const formattedJson = formatJson(json);
-    if (formattedJson && formattedJson !== 'Invalid JSON') {
+    if (formattedJson && !formattedJson.startsWith('Invalid JSON')) {
       navigator.clipboard.writeText(formattedJson).then(() => {
         message.success('复制成功');
       }).catch(() => {
@@ -49,8 +65,6 @@ const JsonViewer: React.FC<JsonViewerProps> = ({ json }) => {
   const handleToggleCompress = () => {
     setIsCompressed((prev) => !prev);
   };
-
-  const formattedJson = formatJson(json);
 
   // 生成行号
   const generateLineNumbers = (text: string) => {
@@ -73,14 +87,14 @@ const JsonViewer: React.FC<JsonViewerProps> = ({ json }) => {
           <button
             className="copy-button"
             onClick={handleToggleCompress}
-            disabled={!formattedJson || formattedJson === 'Invalid JSON'}
+            disabled={!formattedJson || formattedJson.startsWith('Invalid JSON')}
           >
             {isCompressed ? '格式化' : '压缩'}
           </button>
           <button 
             className="copy-button" 
             onClick={handleCopy}
-            disabled={!formattedJson || formattedJson === 'Invalid JSON'}
+            disabled={!formattedJson || formattedJson.startsWith('Invalid JSON')}
           >
             <CopyOutlined /> 复制
           </button>
