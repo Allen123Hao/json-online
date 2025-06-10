@@ -31,7 +31,7 @@
 
 ```bash
 # 克隆项目
-git clone [项目地址]
+git clone https://github.com/Allen123Hao/json-online.git
 
 # 进入项目目录
 cd json-online
@@ -86,6 +86,8 @@ json-online/
 │   ├── App.tsx         # 主应用组件
 │   └── main.tsx        # 应用入口
 ├── public/             # 公共资源目录
+├── docs/               # 项目文档目录
+│   └── images/         # 文档相关图片
 ├── index.html          # HTML 模板
 └── vite.config.ts      # Vite 配置
 ```
