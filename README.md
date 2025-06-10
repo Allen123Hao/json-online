@@ -2,6 +2,10 @@
 
 一个基于 React + TypeScript + Vite 构建的在线 JSON 工具，提供 JSON 格式化、验证和美化功能。
 
+## 效果预览
+
+![JSON Online 效果图](./docs/images/preview.png)
+
 ## 功能特性
 
 - JSON 格式化与美化
